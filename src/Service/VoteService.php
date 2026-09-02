@@ -7,6 +7,7 @@ use App\Entity\Utilisateur;
 use App\Entity\Vote;
 use App\Entity\VoteCounter;
 use App\Repository\VoteCounterRepository;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -192,9 +193,53 @@ class VoteService
         return false;
     }
 
+    /**
+     * Set the user's vote to a desired state. Unlike the website toggle actions,
+     * this operation is idempotent and is therefore safe for API retries.
+     */
+    public function setVoteState(Song $song, Utilisateur $user, ?bool $desiredVote): VoteCounter
+    {
+        return $this->em->wrapInTransaction(function () use ($song, $user, $desiredVote): VoteCounter {
+            $this->em->lock($song, LockMode::PESSIMISTIC_WRITE);
+
+            $voteCounter = $this->voteCounterRepository->findOneBy([
+                'song' => $song,
+                'user' => $user,
+            ]);
+            $previousVote = $voteCounter?->getVotesIndc();
+
+            if ($voteCounter === null) {
+                $voteCounter = (new VoteCounter())
+                    ->setSong($song)
+                    ->setUser($user);
+                $song->addVoteCounter($voteCounter);
+                $this->em->persist($voteCounter);
+            }
+
+            if ($previousVote !== $desiredVote) {
+                if ($previousVote === true) {
+                    $song->setVoteUp(max(0, ($song->getVoteUp() ?? 0) - 1));
+                } elseif ($previousVote === false) {
+                    $song->setVoteDown(max(0, ($song->getVoteDown() ?? 0) - 1));
+                }
+
+                if ($desiredVote === true) {
+                    $song->setVoteUp(($song->getVoteUp() ?? 0) + 1);
+                } elseif ($desiredVote === false) {
+                    $song->setVoteDown(($song->getVoteDown() ?? 0) + 1);
+                }
+
+                $voteCounter->setVotesIndc($desiredVote);
+            }
+
+            $this->em->flush();
+
+            return $voteCounter;
+        });
+    }
+
     public function getLast(Song $song, ?UserInterface $getUser): ?VoteCounter
     {
         return $this->voteCounterRepository->findOneBy(['song' => $song, 'user' => $getUser]);
     }
 }
-

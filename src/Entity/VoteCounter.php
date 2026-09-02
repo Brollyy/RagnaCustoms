@@ -8,6 +8,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: VoteCounterRepository::class)]
+#[ORM\UniqueConstraint(name: 'uniq_vote_counter_user_song', columns: ['user_id', 'song_id'])]
 class VoteCounter
 {
     use TimestampableEntity;
