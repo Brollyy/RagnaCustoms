@@ -126,7 +126,12 @@ readonly class SongService
 
     public function getFileSize(Song $song)
     {
-        $size = filesize($this->kernel->getProjectDir()."/public/songs-files/".$song->getId().".zip");
+        $file = $this->kernel->getProjectDir()."/public/songs-files/".$song->getId().".zip";
+        if (!is_file($file)) {
+            return '0.00B';
+        }
+
+        $size = filesize($file);
         $sz = 'BKMGTP';
         $factor = floor((strlen($size) - 1) / 3);
 
@@ -1465,4 +1470,3 @@ readonly class SongService
         return $this->scoreRepository->findOneBy(['user' => $user, 'songDifficulty' => $diff]) != null;
     }
 }
-

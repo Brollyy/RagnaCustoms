@@ -13,6 +13,7 @@ use App\Repository\NotificationRepository;
 use App\Repository\ScoreHistoryRepository;
 use App\Repository\ScoreRepository;
 use App\Repository\SongDifficultyRepository;
+use App\Repository\SongDifficultyNotationRepository;
 use App\Repository\SongHashRepository;
 use App\Repository\SongRepository;
 use App\Repository\VoteCounterRepository;
@@ -45,6 +46,7 @@ class SongServiceTest extends TestCase
             'contact@ragnacustoms.com',
             $this->createMock(DifficultyRankRepository::class),
             $this->createMock(SongDifficultyRepository::class),
+            $this->createMock(SongDifficultyNotationRepository::class),
             $this->createMock(DownloadCounterRepository::class),
             $this->createMock(ScoreHistoryRepository::class),
             $this->createMock(ScoreRepository::class),
@@ -431,6 +433,7 @@ class SongServiceTest extends TestCase
             'contact@ragnacustoms.com',
             $this->createMock(DifficultyRankRepository::class),
             $this->createMock(SongDifficultyRepository::class),
+            $this->createMock(SongDifficultyNotationRepository::class),
             $this->createMock(DownloadCounterRepository::class),
             $this->createMock(ScoreHistoryRepository::class),
             $this->createMock(ScoreRepository::class),
@@ -482,6 +485,7 @@ class SongServiceTest extends TestCase
             'contact@ragnacustoms.com',
             $this->createMock(DifficultyRankRepository::class),
             $this->createMock(SongDifficultyRepository::class),
+            $this->createMock(SongDifficultyNotationRepository::class),
             $this->createMock(DownloadCounterRepository::class),
             $this->createMock(ScoreHistoryRepository::class),
             $this->createMock(ScoreRepository::class),
@@ -493,8 +497,7 @@ class SongServiceTest extends TestCase
         $song = $this->createMock(Song::class);
         $song->method('getId')->willReturn(999);
 
-        $this->expectWarning();
-        $songService->getFileSize($song);
+        $this->assertSame('0.00B', $songService->getFileSize($song));
     }
     #endregion
 
